@@ -36,7 +36,6 @@ export const globalErrorHandler = async (
   if (env.NODE_ENV === "development") {
     console.log("Error from Global Error Handler", err);
   }
-
   // await deleteUploadedFilesFromGlobalErrorHandler(req);
 
   let statusCode: number = status.INTERNAL_SERVER_ERROR;
