@@ -39,4 +39,25 @@ export const auth = betterAuth({
       },
     },
   },
+  advanced: {
+    /**
+     * Forces cookies to be sent only over HTTPS.
+     *
+     * ✅ Required in production
+     * ❌ Will break on localhost (HTTP) if always true
+     *
+     * Recommended:
+     * useSecureCookies: process.env.NODE_ENV === "production"
+     *
+     * Set to true to use __Secure- prefixed cookies (recommended for better authentication security in production over HTTPS)
+     */
+    useSecureCookies: false,
+
+    defaultCookieAttributes: {
+      sameSite: "none",
+      secure: true,
+      httpOnly: true,
+      path: "/",
+    },
+  },
 });

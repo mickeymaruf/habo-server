@@ -23,6 +23,18 @@ enum UserStatus {
   ACTIVE
 }
 
+enum ChallengeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 model User {
   id            String    @id
   name          String
@@ -34,10 +46,15 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  role      UserRole   @default(USER)
-  status    UserStatus @default(ACTIVE)
-  isDeleted Boolean    @default(false)
-  deletedAt DateTime?
+  role           UserRole        @default(USER)
+  status         UserStatus      @default(ACTIVE)
+  isDeleted      Boolean         @default(false)
+  deletedAt      DateTime?
+  participations Participation[]
+  comments       Comment[]
+  votes          Vote[]
+  payments       Payment[]
+  challenges     Challenge[]
 
   @@unique([email])
   @@map("user")
@@ -89,4 +106,94 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Challenge {
+  id           String          @id @default(uuid())
+  title        String
+  description  String
+  durationDays Int
+  category     String
+  isPremium    Boolean         @default(false)
+  featured     Boolean         @default(false)
+  price        Float?
+  status       ChallengeStatus @default(PENDING)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  creatorId String
+  creator   User   @relation(fields: [creatorId], references: [id])
+
+  participations Participation[]
+  comments       Comment[]
+  votes          Vote[]
+  payments       Payment[]
+}
+
+model Participation {
+  id          String   @id @default(uuid())
+  userId      String
+  challengeId String
+  joinedAt    DateTime @default(now())
+  progress    Int      @default(0) // % completion
+  completed   Boolean  @default(false)
+
+  user      User      @relation(fields: [userId], references: [id])
+  challenge Challenge @relation(fields: [challengeId], references: [id])
+
+  progressLogs Progress[]
+
+  @@unique([userId, challengeId])
+}
+
+model Progress {
+  id              String   @id @default(uuid())
+  participationId String
+  day             Int
+  note            String?
+  completed       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  participation Participation @relation(fields: [participationId], references: [id])
+
+  @@unique([participationId, day])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  userId      String
+  challengeId String
+
+  user      User      @relation(fields: [userId], references: [id])
+  challenge Challenge @relation(fields: [challengeId], references: [id])
+}
+
+model Vote {
+  id    String @id @default(uuid())
+  value Int // +1 or -1
+
+  userId      String
+  challengeId String
+
+  user      User      @relation(fields: [userId], references: [id])
+  challenge Challenge @relation(fields: [challengeId], references: [id])
+
+  @@unique([userId, challengeId])
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  userId        String
+  challengeId   String
+  amount        Float
+  status        PaymentStatus @default(PENDING)
+  provider      String // Stripe / SSLCommerz
+  transactionId String?
+  createdAt     DateTime      @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  challenge Challenge @relation(fields: [challengeId], references: [id])
 }
