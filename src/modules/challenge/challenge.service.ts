@@ -34,6 +34,17 @@ const getChallenges = async (query: any) => {
     },
     include: {
       creator: true,
+      participations: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+      },
       _count: {
         select: {
           votes: true,
@@ -55,7 +66,17 @@ const getSingleChallenge = async (id: string) => {
       creator: true,
       comments: true,
       votes: true,
-      participations: true,
+      participations: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+      },
     },
   });
 

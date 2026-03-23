@@ -5,6 +5,7 @@ import { ParticipationRoutes } from "../modules/participation/participation.rout
 const router = Router();
 
 router.use("/challenges", ChallengeRoutes);
-router.use("/participation", ParticipationRoutes);
+router.use("/participations", ParticipationRoutes);
+router.use("/progress", ParticipationRoutes);
 
 export const IndexRoutes = router;

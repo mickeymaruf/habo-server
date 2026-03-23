@@ -4,6 +4,8 @@ import { prisma } from "./prisma";
 import { env } from "../config/env";
 import { UserRole, UserStatus } from "../../generated/prisma/enums";
 
+const isProd = process.env.NODE_ENV === "production";
+
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
@@ -54,8 +56,8 @@ export const auth = betterAuth({
     useSecureCookies: false,
 
     defaultCookieAttributes: {
-      sameSite: "none",
-      secure: true,
+      sameSite: isProd ? "none" : "lax",
+      secure: isProd,
       httpOnly: true,
       path: "/",
     },
