@@ -22,6 +22,13 @@ router.get(
   ParticipationController.getMyParticipations,
 );
 
+// single participation
+router.get(
+  "/:id",
+  checkAuth(UserRole.USER, UserRole.ADMIN),
+  ParticipationController.getSingleParticipation,
+);
+
 // leave challenge
 router.delete(
   "/:challengeId",

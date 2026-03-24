@@ -34,17 +34,7 @@ const getChallenges = async (query: any) => {
     },
     include: {
       creator: true,
-      participations: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
-          },
-        },
-      },
+      participations: true,
       _count: {
         select: {
           votes: true,

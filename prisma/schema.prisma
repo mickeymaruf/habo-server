@@ -149,14 +149,14 @@ model Participation {
 model Progress {
   id              String   @id @default(uuid())
   participationId String
-  day             Int
+  date            DateTime
   note            String?
   completed       Boolean  @default(true)
   createdAt       DateTime @default(now())
 
   participation Participation @relation(fields: [participationId], references: [id])
 
-  @@unique([participationId, day])
+  @@unique([participationId, date])
 }
 
 model Comment {

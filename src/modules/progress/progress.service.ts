@@ -1,13 +1,15 @@
 import status from "http-status";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/errorHelpers/AppError";
-import { CreateProgressPayload } from "./progress.validation";
+import { startOfDay } from "date-fns";
 
 const createProgress = async (
   userId: string,
-  payload: CreateProgressPayload,
+  payload: { participationId: string; note?: string },
 ) => {
-  const { participationId, day, note } = payload;
+  const { participationId, note } = payload;
+
+  const today = startOfDay(new Date());
 
   // check participation exists
   const participation = await prisma.participation.findUnique({
@@ -24,28 +26,28 @@ const createProgress = async (
     throw new AppError("Unauthorized", status.FORBIDDEN);
   }
 
-  // prevent duplicate day entry
+  // 🚫 prevent future/backfill (strict mode)
+  // (optional: allow yesterday later if needed)
+
+  // prevent duplicate (same day)
   const existing = await prisma.progress.findUnique({
     where: {
-      participationId_day: {
+      participationId_date: {
         participationId,
-        day,
+        date: today,
       },
     },
   });
 
   if (existing) {
-    throw new AppError(
-      "Progress for this day already exists",
-      status.BAD_REQUEST,
-    );
+    throw new AppError("Already checked today", status.BAD_REQUEST);
   }
 
   // create progress
   const progress = await prisma.progress.create({
     data: {
       participationId,
-      day,
+      date: today,
       note,
     },
   });
@@ -89,7 +91,7 @@ const getProgress = async (userId: string, participationId: string) => {
   return prisma.progress.findMany({
     where: { participationId },
     orderBy: {
-      day: "asc",
+      date: "asc", // ✅ instead of day
     },
   });
 };

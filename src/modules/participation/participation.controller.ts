@@ -32,6 +32,23 @@ const getMyParticipations = catchAsync(async (req, res) => {
   });
 });
 
+const getSingleParticipation = catchAsync(async (req, res) => {
+  const user = req.user;
+  const { id } = req.params;
+
+  const result = await ParticipationService.getSingleParticipation(
+    user.id,
+    id as string,
+  );
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Participation fetched successfully",
+    data: result,
+  });
+});
+
 const leaveChallenge = catchAsync(async (req, res) => {
   const user = req.user;
   const { challengeId } = req.params;
@@ -52,5 +69,6 @@ const leaveChallenge = catchAsync(async (req, res) => {
 export const ParticipationController = {
   joinChallenge,
   getMyParticipations,
+  getSingleParticipation,
   leaveChallenge,
 };
