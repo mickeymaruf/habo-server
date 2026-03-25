@@ -16,6 +16,16 @@ const createChallenge = async (
     data: {
       ...payload,
       creatorId: userId,
+
+      // create a participation for the creator of the challenge
+      participations: {
+        create: {
+          userId,
+        },
+      },
+    },
+    include: {
+      participations: true,
     },
   });
 };
