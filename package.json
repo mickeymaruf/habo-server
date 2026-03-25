@@ -8,7 +8,9 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "lint": "eslint src/**/*",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "stripe:webhook": "stripe listen --forward-to localhost:5000/webhook",
+    "stripe:test": "stripe trigger payment_intent.succeeded"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +26,7 @@
     "express": "^5.2.1",
     "http-status": "^2.1.0",
     "pg": "^8.20.0",
+    "stripe": "^20.4.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

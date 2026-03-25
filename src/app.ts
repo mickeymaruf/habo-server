@@ -7,6 +7,7 @@ import { notFound } from "./middlewares/notFound";
 import { AuthRoutes } from "./modules/auth/auth.route";
 import { env } from "./config/env";
 import { IndexRoutes } from "./routes";
+import { PaymentController } from "./modules/payment/payment.controller";
 
 const app = express();
 
@@ -22,6 +23,12 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
+);
+
+app.post(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  PaymentController.handleStripeWebhookEvent,
 );
 
 app.use("/api/auth", AuthRoutes);
