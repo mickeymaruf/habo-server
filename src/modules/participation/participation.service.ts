@@ -51,6 +51,13 @@ const getMyParticipations = async (userId: string) => {
               },
             },
           },
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
         },
       },
       progressLogs: true,

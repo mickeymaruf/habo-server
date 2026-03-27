@@ -67,8 +67,26 @@ const getSingleChallenge = async (id: string) => {
   const challenge = await prisma.challenge.findUnique({
     where: { id },
     include: {
-      creator: true,
-      comments: true,
+      creator: {
+        select: {
+          id: true,
+          name: true,
+          image: true,
+          status: true,
+        },
+      },
+      comments: {
+        include: {
+          user: {
+            select: {
+              name: true,
+              image: true,
+              status: true,
+            },
+          },
+        },
+        omit: { challengeId: true },
+      },
       votes: true,
       participations: {
         include: {

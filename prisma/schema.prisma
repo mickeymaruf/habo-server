@@ -55,6 +55,7 @@ model User {
   votes          Vote[]
   payments       Payment[]
   challenges     Challenge[]
+  commentLikes   CommentLike[]
 
   @@unique([email])
   @@map("user")
@@ -166,9 +167,26 @@ model Comment {
 
   userId      String
   challengeId String
+  parentId    String? // ID of the parent comment if this is a reply
 
-  user      User      @relation(fields: [userId], references: [id])
-  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id])
+  challenge Challenge     @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  parent    Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[]     @relation("CommentReplies")
+  likes     CommentLike[]
+}
+
+model CommentLike {
+  id        String   @id @default(uuid())
+  userId    String
+  commentId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  // Ensures a user can only like a specific comment once
+  @@unique([userId, commentId])
 }
 
 model Vote {
