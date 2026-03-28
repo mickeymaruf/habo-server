@@ -6,6 +6,7 @@ import { PaymentRoutes } from "../modules/payment/payment.route";
 import { StatsRoutes } from "../modules/stats/stats.route";
 import { CommentRoutes } from "../modules/comment/comment.route";
 import { VoteRoutes } from "../modules/vote/vote.route";
+import { LeaderboardRoutes } from "../modules/leaderboard/leaderboard.route";
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use("/payments", PaymentRoutes);
 router.use("/stats", StatsRoutes);
 router.use("/comments", CommentRoutes);
 router.use("/votes", VoteRoutes);
+router.use("/leaderboard", LeaderboardRoutes);
 
 export const IndexRoutes = router;
