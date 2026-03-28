@@ -2,6 +2,8 @@ import status from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { ChallengeService } from "./challenge.service";
+import { auth } from "../../lib/auth";
+import { fromNodeHeaders } from "better-auth/node";
 
 const createChallenge = catchAsync(async (req, res) => {
   const user = req.user;
@@ -28,8 +30,13 @@ const getChallenges = catchAsync(async (req, res) => {
 });
 
 const getSingleChallenge = catchAsync(async (req, res) => {
+  const session = await auth.api.getSession({
+    headers: fromNodeHeaders(req.headers),
+  });
+
   const result = await ChallengeService.getSingleChallenge(
     req.params.id as string,
+    session?.user?.id as string,
   );
 
   sendResponse(res, {

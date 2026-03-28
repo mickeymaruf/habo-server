@@ -11,7 +11,6 @@ const createComment = async (
     parentId?: string;
   },
 ) => {
-  console.log(payload);
   if (payload.parentId) {
     const parent = await prisma.comment.findUnique({
       where: { id: payload.parentId },
@@ -81,6 +80,7 @@ const getCommentsByChallenge = async (challengeId: string, userId?: string) => {
     })),
   }));
 };
+
 const deleteComment = async (
   user: { id: string; role: UserRole },
   commentId: string,
@@ -99,7 +99,7 @@ const deleteComment = async (
     throw new AppError("Unauthorized", status.FORBIDDEN);
   }
 
-  await prisma.comment.delete({
+  return await prisma.comment.delete({
     where: { id: commentId },
   });
 };

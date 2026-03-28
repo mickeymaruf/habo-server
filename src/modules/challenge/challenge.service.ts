@@ -63,42 +63,45 @@ const getChallenges = async (query: any) => {
   });
 };
 
-const getSingleChallenge = async (id: string) => {
+const getSingleChallenge = async (id: string, userId: string | null) => {
   const challenge = await prisma.challenge.findUnique({
     where: { id },
     include: {
       creator: {
-        select: {
-          id: true,
-          name: true,
-          image: true,
-          status: true,
-        },
+        select: { id: true, name: true, image: true, status: true },
       },
       comments: {
         include: {
           user: {
-            select: {
-              name: true,
-              image: true,
-              status: true,
-            },
+            select: { name: true, image: true, status: true },
           },
         },
         omit: { challengeId: true },
       },
-      votes: true,
       participations: {
         include: {
           user: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
+            select: { id: true, name: true, image: true },
           },
         },
       },
+      // 1. OPTIMIZATION: Just get the count, not the records
+      _count: {
+        select: {
+          votes: true,
+          comments: true,
+          participations: true,
+        },
+      },
+      // 2. LOGIC: Check if the specific user has voted
+      votes: userId
+        ? {
+            where: {
+              userId: userId,
+            },
+            take: 1,
+          }
+        : false,
     },
   });
 
@@ -106,7 +109,10 @@ const getSingleChallenge = async (id: string) => {
     throw new AppError("Challenge not found", status.NOT_FOUND);
   }
 
-  return challenge;
+  return {
+    ...challenge,
+    votedByMe: challenge.votes?.length > 0,
+  };
 };
 
 const updateChallenge = async (
