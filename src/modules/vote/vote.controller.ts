@@ -6,8 +6,6 @@ import { VoteService } from "./vote.service";
 const voteChallenge = catchAsync(async (req, res) => {
   const result = await VoteService.voteChallenge(req.user.id, req.body);
 
-  console.log(result);
-
   sendResponse(res, {
     statusCode: status.OK,
     success: true,

@@ -27,13 +27,15 @@ export interface TErrorResponse {
   stack?: string;
 }
 
+const isDev = process.env.NODE_ENV === "development";
+
 export const globalErrorHandler = async (
   err: any,
   req: Request,
   res: Response,
   next: NextFunction, // ⚠️ Must include 4 params or Express won’t recognize this as an error middleware
 ) => {
-  if (env.NODE_ENV === "development") {
+  if (isDev) {
     console.log("Error from Global Error Handler", err);
   }
   // await deleteUploadedFilesFromGlobalErrorHandler(req);
@@ -103,8 +105,8 @@ export const globalErrorHandler = async (
     statusCode,
     message,
     errorSources: errorSources,
-    error: env.NODE_ENV === "development" ? err : undefined,
-    stack: env.NODE_ENV === "development" ? stack : undefined,
+    error: isDev ? err : undefined,
+    stack: isDev ? stack : undefined,
   };
 
   res.status(statusCode).json(errorResponse);
