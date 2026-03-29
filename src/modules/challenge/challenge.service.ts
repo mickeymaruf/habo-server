@@ -64,6 +64,13 @@ const getChallenges = async (query: any) => {
 };
 
 const getSingleChallenge = async (id: string, userId: string | null) => {
+  // 1. Define the time range for "Today"
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+
   const challenge = await prisma.challenge.findUnique({
     where: { id },
     include: {
@@ -109,9 +116,24 @@ const getSingleChallenge = async (id: string, userId: string | null) => {
     throw new AppError("Challenge not found", status.NOT_FOUND);
   }
 
+  // 2. NECESSARY ADDITION: Count completions for today specifically
+  const completedToday = await prisma.progress.count({
+    where: {
+      participation: {
+        challengeId: id,
+      },
+      date: {
+        gte: startOfToday,
+        lte: endOfToday,
+      },
+      completed: true,
+    },
+  });
+
   return {
     ...challenge,
     votedByMe: challenge.votes?.length > 0,
+    completedToday,
   };
 };
 
