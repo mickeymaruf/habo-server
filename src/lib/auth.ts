@@ -9,7 +9,25 @@ const isProd = process.env.NODE_ENV === "production";
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
-  trustedOrigins: [env.BETTER_AUTH_URL, env.FRONTEND_URL],
+  trustedOrigins: async (request) => {
+    const origin = request?.headers.get("origin");
+
+    const allowedOrigins = [env.BETTER_AUTH_URL, env.FRONTEND_URL].filter(
+      Boolean,
+    );
+
+    // Check if origin matches allowed origins or Vercel pattern
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      /^https:\/\/.*\.vercel\.app$/.test(origin)
+    ) {
+      return [origin];
+    }
+
+    return [];
+  },
+  basePath: "/api/auth",
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
@@ -41,7 +59,14 @@ export const auth = betterAuth({
       },
     },
   },
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 minutes
+    },
+  },
   advanced: {
+    cookiePrefix: "better-auth",
     /**
      * Forces cookies to be sent only over HTTPS.
      *
@@ -53,13 +78,20 @@ export const auth = betterAuth({
      *
      * Set to true to use __Secure- prefixed cookies (recommended for better authentication security in production over HTTPS)
      */
-    useSecureCookies: false,
-
+    useSecureCookies: isProd,
+    crossSubDomainCookies: {
+      enabled: false,
+    },
+    disableCSRFCheck: true, // Allow requests without Origin header (Postman, mobile apps, etc.)
     defaultCookieAttributes: {
-      sameSite: isProd ? "none" : "lax",
-      secure: isProd,
       httpOnly: true,
+      sameSite: "none",
+      secure: true,
       path: "/",
+
+      // sameSite: isProd ? "none" : "lax",
+      // secure: isProd,
+      // httpOnly: true,
     },
   },
 });

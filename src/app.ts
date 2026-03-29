@@ -11,17 +11,31 @@ import { PaymentController } from "./modules/payment/payment.controller";
 
 const app = express();
 
+const allowedOrigins = [env.FRONTEND_URL, env.BETTER_AUTH_URL].filter(Boolean);
+
 app.use(
   cors({
-    origin: [
-      env.FRONTEND_URL,
-      env.BETTER_AUTH_URL,
-      "http://localhost:3000",
-      "http://localhost:5000",
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
+
+      // Check if origin is in allowedOrigins or matches Vercel preview pattern
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        // Only allow your specific project's preview deployments
+        /^https:\/\/habo-client-.*\.vercel\.app$/.test(origin) ||
+        /^https:\/\/.*\.vercel\.app$/.test(origin); // Any Vercel deployment
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["Set-Cookie"],
   }),
 );
 
