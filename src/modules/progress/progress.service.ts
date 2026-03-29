@@ -21,6 +21,14 @@ const createProgress = async (
     throw new AppError("Participation not found", status.NOT_FOUND);
   }
 
+  // prevent logging if they left the challenge
+  if (participation.status === "LEFT") {
+    throw new AppError(
+      "You cannot log progress for a challenge you have left. Please rejoin first.",
+      status.FORBIDDEN,
+    );
+  }
+
   // ownership check
   if (participation.userId !== userId) {
     throw new AppError("Unauthorized", status.FORBIDDEN);
@@ -59,12 +67,17 @@ const createProgress = async (
     where: { participationId },
   });
 
-  const progressPercent = Math.floor((totalCompleted / totalDays) * 100);
+  // ensure progress never exceeds 100%
+  const progressPercent = Math.min(
+    Math.floor((totalCompleted / totalDays) * 100),
+    100,
+  );
 
   const updatedParticipation = await prisma.participation.update({
     where: { id: participationId },
     data: {
       progress: progressPercent,
+      // Mark as completed only if they hit 100%
       completed: progressPercent === 100,
     },
   });
@@ -80,8 +93,9 @@ const getProgress = async (userId: string, participationId: string) => {
     where: { id: participationId },
   });
 
-  if (!participation) {
-    throw new AppError("Participation not found", status.NOT_FOUND);
+  // If they left, they shouldn't be able to fetch the active progress view
+  if (!participation || participation.status === "LEFT") {
+    throw new AppError("Active participation not found", status.NOT_FOUND);
   }
 
   if (participation.userId !== userId) {

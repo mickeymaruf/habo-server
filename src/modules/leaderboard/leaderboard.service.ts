@@ -8,12 +8,13 @@ const getTopChallenges = async () => {
     include: {
       _count: {
         select: {
-          participations: true,
+          participations: { where: { status: "ACTIVE" } },
           votes: true,
           comments: true,
         },
       },
       participations: {
+        where: { status: "ACTIVE" },
         take: 3,
         orderBy: {
           progress: "desc", // Show the users closest to finishing first
@@ -97,6 +98,7 @@ const getTopUsers = async () => {
         },
       },
       participations: {
+        where: { status: "ACTIVE" },
         select: {
           progress: true,
           progressLogs: {

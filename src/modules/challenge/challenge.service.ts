@@ -31,7 +31,11 @@ const createChallenge = async (
 };
 
 const getChallenges = async (query: any) => {
-  const { search, category } = query;
+  const { search, category, featured } = query;
+
+  // Convert string query "true"/"false" to actual boolean if present
+  const isFeatured =
+    featured === "true" ? true : featured === "false" ? false : undefined;
 
   return prisma.challenge.findMany({
     where: {
@@ -41,10 +45,12 @@ const getChallenges = async (query: any) => {
         mode: "insensitive",
       },
       category: category || undefined,
+      featured: isFeatured,
     },
     include: {
       creator: true,
       participations: {
+        where: { status: "ACTIVE" },
         include: {
           user: true,
         },
@@ -53,7 +59,7 @@ const getChallenges = async (query: any) => {
         select: {
           votes: true,
           comments: true,
-          participations: true,
+          participations: { where: { status: "ACTIVE" } },
         },
       },
     },
@@ -77,15 +83,10 @@ const getSingleChallenge = async (id: string, userId: string | null) => {
       creator: {
         select: { id: true, name: true, image: true, status: true },
       },
-      comments: {
-        include: {
-          user: {
-            select: { name: true, image: true, status: true },
-          },
-        },
-        omit: { challengeId: true },
-      },
       participations: {
+        where: {
+          status: "ACTIVE", // Only fetch members who haven't left
+        },
         include: {
           user: {
             select: { id: true, name: true, image: true },
@@ -97,7 +98,9 @@ const getSingleChallenge = async (id: string, userId: string | null) => {
         select: {
           votes: true,
           comments: true,
-          participations: true,
+          participations: {
+            where: { status: "ACTIVE" },
+          },
         },
       },
       // 2. LOGIC: Check if the specific user has voted
@@ -121,6 +124,7 @@ const getSingleChallenge = async (id: string, userId: string | null) => {
     where: {
       participation: {
         challengeId: id,
+        status: "ACTIVE",
       },
       date: {
         gte: startOfToday,

@@ -35,6 +35,11 @@ enum PaymentStatus {
   FAILED
 }
 
+enum ParticipationStatus {
+  ACTIVE
+  LEFT
+}
+
 model User {
   id            String    @id
   name          String
@@ -132,12 +137,13 @@ model Challenge {
 }
 
 model Participation {
-  id          String   @id @default(uuid())
+  id          String              @id @default(uuid())
   userId      String
   challengeId String
-  joinedAt    DateTime @default(now())
-  progress    Int      @default(0) // % completion
-  completed   Boolean  @default(false)
+  joinedAt    DateTime            @default(now())
+  progress    Int                 @default(0) // % completion
+  completed   Boolean             @default(false)
+  status      ParticipationStatus @default(ACTIVE)
 
   user      User      @relation(fields: [userId], references: [id])
   challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)

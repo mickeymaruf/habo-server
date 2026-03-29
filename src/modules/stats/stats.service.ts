@@ -36,6 +36,7 @@ const getAdminStatsData = async () => {
     totalChallenges,
     premiumChallenges,
     totalParticipations,
+    activeParticipations,
     completedParticipations,
     totalComments,
     totalVotes,
@@ -47,6 +48,7 @@ const getAdminStatsData = async () => {
     prisma.challenge.count(),
     prisma.challenge.count({ where: { isPremium: true } }),
     prisma.participation.count(),
+    prisma.participation.count({ where: { status: "ACTIVE" } }),
     prisma.participation.count({ where: { completed: true } }),
     prisma.comment.count(),
     prisma.vote.count(),
@@ -131,6 +133,7 @@ const getUserStatsData = async (user: IRequestUser) => {
     prisma.participation.count({
       where: {
         userId: dbUser.id,
+        status: "ACTIVE", // ONLY count challenges they haven't left
       },
     }),
 
@@ -164,8 +167,9 @@ const getUserStatsData = async (user: IRequestUser) => {
     }),
   ]);
 
+  // Update the Progress Chart to include the "LEFT" status or exclude it
   const participationProgress = await prisma.participation.groupBy({
-    by: ["completed"],
+    by: ["completed", "status"], // Add status here
     _count: {
       id: true,
     },
@@ -181,10 +185,12 @@ const getUserStatsData = async (user: IRequestUser) => {
     totalComments,
     totalVotes,
     totalSpent: totalSpent._sum.amount || 0,
-    participationProgress: participationProgress.map((item) => ({
-      status: item.completed ? "COMPLETED" : "IN_PROGRESS",
-      count: item._count.id,
-    })),
+    participationProgress: participationProgress
+      .filter((item) => item.status === "ACTIVE") // Usually, charts only show active goals
+      .map((item) => ({
+        status: item.completed ? "COMPLETED" : "IN_PROGRESS",
+        count: item._count.id,
+      })),
   };
 };
 
@@ -259,6 +265,7 @@ const getParticipationChartData = async () => {
     SELECT DATE_TRUNC('month', "joinedAt") AS month,
     COUNT(*)::bigint AS count
     FROM "Participation"
+    WHERE "status" = 'ACTIVE' -- Add this line
     GROUP BY month
     ORDER BY month ASC;
   `;
@@ -300,7 +307,8 @@ const getTopChallengesChartData = async () => {
       title: true,
       _count: {
         select: {
-          participations: true,
+          // Count only active people for the "Top" ranking
+          participations: { where: { status: "ACTIVE" } },
           comments: true,
           votes: true,
         },

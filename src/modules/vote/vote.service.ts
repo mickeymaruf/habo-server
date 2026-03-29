@@ -37,17 +37,21 @@ const removeVote = async (userId: string, challengeId: string) => {
 };
 
 const getChallengeVotes = async (challengeId: string) => {
-  const votes = await prisma.vote.findMany({
+  const groupVotes = await prisma.vote.groupBy({
+    by: ["value"],
     where: { challengeId },
-    select: {
-      value: true,
+    _count: {
+      _all: true,
     },
   });
 
+  const upvotes = groupVotes.find((v) => v.value === 1)?._count._all || 0;
+  const downvotes = groupVotes.find((v) => v.value === -1)?._count._all || 0;
+
   return {
-    upvotes: votes.filter((v) => v.value === 1).length,
-    downvotes: votes.filter((v) => v.value === -1).length,
-    score: votes.reduce((acc, vote) => acc + vote.value, 0),
+    upvotes,
+    downvotes,
+    score: upvotes - downvotes,
   };
 };
 
