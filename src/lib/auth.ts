@@ -84,14 +84,10 @@ export const auth = betterAuth({
     },
     disableCSRFCheck: true, // Allow requests without Origin header (Postman, mobile apps, etc.)
     defaultCookieAttributes: {
+      sameSite: isProd ? "none" : "lax",
+      secure: isProd,
       httpOnly: true,
-      sameSite: "none",
-      secure: true,
       path: "/",
-
-      // sameSite: isProd ? "none" : "lax",
-      // secure: isProd,
-      // httpOnly: true,
     },
   },
 });

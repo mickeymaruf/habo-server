@@ -36,6 +36,18 @@ const createCheckoutSession = async (userId: string, challengeId: string) => {
     ],
   });
 
+  await prisma.payment.create({
+    data: {
+      userId,
+      challengeId,
+      amount: challenge.price!,
+      currency: "usd",
+      status: "PENDING",
+      provider: "STRIPE",
+      sessionId: session.id,
+    },
+  });
+
   return { url: session.url };
 };
 

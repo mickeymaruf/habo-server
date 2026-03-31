@@ -209,14 +209,20 @@ model Vote {
 }
 
 model Payment {
-  id            String        @id @default(uuid())
-  userId        String
-  challengeId   String
-  amount        Float
-  status        PaymentStatus @default(PENDING)
-  provider      String // Stripe / SSLCommerz
-  transactionId String?
-  createdAt     DateTime      @default(now())
+  id          String        @id @default(uuid())
+  userId      String
+  challengeId String
+  amount      Float
+  currency    String        @default("usd")
+  status      PaymentStatus @default(PENDING)
+  provider    String // Stripe / SSLCommerz
+
+  sessionId       String  @unique // The Checkout Session ID -> User Clicks "Pay"	sessionId -> Stripe creates this when the checkout session is created.
+  paymentIntentId String? @unique // Payment Success paymentIntentId -> Stripe creates this once the card is charged. 
+  stripeEventId   String? @unique // Stripe Event ID for webhook verification
+  gatewayResponse Json? // Store the full response from the payment gateway for auditing and debugging
+
+  createdAt DateTime @default(now())
 
   user      User      @relation(fields: [userId], references: [id])
   challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)

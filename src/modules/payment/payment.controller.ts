@@ -5,8 +5,8 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import Stripe from "stripe";
 import { stripe } from "../../config/stripe.config";
-import { ParticipationService } from "../participation/participation.service";
 import { env } from "../../config/env";
+import { prisma } from "../../lib/prisma";
 
 const createCheckoutSession = catchAsync(async (req, res) => {
   const { challengeId } = req.body;
@@ -27,39 +27,73 @@ const createCheckoutSession = catchAsync(async (req, res) => {
 
 const handleStripeWebhookEvent = async (req: Request, res: Response) => {
   const signature = req.headers["stripe-signature"] as string;
-  const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
-
   let event: Stripe.Event;
 
   try {
-    // 1. Verify the event (Requires the RAW body from app.ts)
-    event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      signature,
+      env.STRIPE_WEBHOOK_SECRET,
+    );
   } catch (err: any) {
     console.error(`Webhook Signature Error: ${err.message}`);
     return res.status(status.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
   }
 
-  // 2. Handle the successful payment
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
+  const session = event.data.object as Stripe.Checkout.Session;
 
-    // Extract metadata we attached during 'createCheckoutSession'
-    const userId = session.metadata?.userId;
-    const challengeId = session.metadata?.challengeId;
+  switch (event.type) {
+    case "checkout.session.completed":
+      // Extract metadata we attached during 'createCheckoutSession'
+      const userId = session.metadata?.userId;
+      const challengeId = session.metadata?.challengeId;
 
-    if (userId && challengeId) {
-      try {
-        // 3. Directly call your existing service to join the user
-        await ParticipationService.joinChallenge(userId, challengeId);
-        console.log(
-          `User ${userId} successfully joined challenge ${challengeId}`,
-        );
-      } catch (dbError: any) {
-        console.error(`Database Update Error: ${dbError.message}`);
-        // We still return 200 to Stripe because the payment was successful;
-        // we just need to handle the DB retry internally.
+      if (userId && challengeId) {
+        try {
+          await prisma.$transaction(async (tx) => {
+            // 1. Check if this specific event was already processed (Idempotency)
+            const existingPayment = await tx.payment.findUnique({
+              where: { stripeEventId: event.id },
+            });
+            if (existingPayment) return;
+
+            // 2. Update Payment Record
+            await tx.payment.update({
+              where: { sessionId: session.id },
+              data: {
+                status: "SUCCESS",
+                paymentIntentId: session.payment_intent as string,
+                stripeEventId: event.id,
+                gatewayResponse: session as any, // Full audit log
+              },
+            });
+
+            // 3. Grant Challenge Access
+            await tx.participation.upsert({
+              where: { userId_challengeId: { userId, challengeId } },
+              update: { status: "ACTIVE" },
+              create: { userId, challengeId, status: "ACTIVE" },
+            });
+          });
+        } catch (error: any) {
+          console.error("WEBHOOK_DB_ERROR:", error.message);
+          throw error;
+        }
       }
-    }
+      break;
+
+    case "checkout.session.expired":
+      await prisma.payment.updateMany({
+        where: {
+          sessionId: session.id,
+          status: "PENDING",
+        },
+        data: { status: "FAILED" },
+      });
+      break;
+
+    default:
+      console.log(`INFO: Ignoring event ${event.type}`);
   }
 
   // 4. Return 200 to Stripe
