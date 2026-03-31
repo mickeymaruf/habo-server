@@ -40,10 +40,9 @@ const handleStripeWebhookEvent = async (req: Request, res: Response) => {
     return res.status(status.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
   }
 
-  const session = event.data.object as Stripe.Checkout.Session;
-
   switch (event.type) {
-    case "checkout.session.completed":
+    case "checkout.session.completed": {
+      const session = event.data.object as Stripe.Checkout.Session;
       // Extract metadata we attached during 'createCheckoutSession'
       const userId = session.metadata?.userId;
       const challengeId = session.metadata?.challengeId;
@@ -81,8 +80,27 @@ const handleStripeWebhookEvent = async (req: Request, res: Response) => {
         }
       }
       break;
+    }
 
-    case "checkout.session.expired":
+    case "payment_intent.payment_failed": {
+      const intent = event.data.object as Stripe.PaymentIntent;
+      await prisma.payment.updateMany({
+        where: {
+          userId: intent.metadata?.userId,
+          challengeId: intent.metadata?.challengeId,
+          status: "PENDING",
+        },
+        data: {
+          status: "FAILED",
+          stripeEventId: event.id,
+          gatewayResponse: intent as any,
+        },
+      });
+      break;
+    }
+
+    case "checkout.session.expired": {
+      const session = event.data.object as Stripe.Checkout.Session;
       await prisma.payment.updateMany({
         where: {
           sessionId: session.id,
@@ -91,6 +109,7 @@ const handleStripeWebhookEvent = async (req: Request, res: Response) => {
         data: { status: "FAILED" },
       });
       break;
+    }
 
     default:
       console.log(`INFO: Ignoring event ${event.type}`);

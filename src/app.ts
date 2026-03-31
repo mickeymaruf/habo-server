@@ -11,7 +11,12 @@ import { PaymentController } from "./modules/payment/payment.controller";
 
 const app = express();
 
-const allowedOrigins = [env.FRONTEND_URL, env.BETTER_AUTH_URL].filter(Boolean);
+const allowedOrigins = [
+  env.FRONTEND_URL,
+  env.BETTER_AUTH_URL,
+  "http://localhost:3000",
+  "http://localhost:5000",
+].filter(Boolean);
 
 app.use(
   cors({

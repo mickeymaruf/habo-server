@@ -85,15 +85,15 @@ const getSingleChallenge = async (id: string, userId: string | null) => {
       },
       participations: {
         where: {
-          status: "ACTIVE", // Only fetch members who haven't left
+          status: "ACTIVE",
         },
+        take: 10,
         include: {
           user: {
             select: { id: true, name: true, image: true },
           },
         },
       },
-      // 1. OPTIMIZATION: Just get the count, not the records
       _count: {
         select: {
           votes: true,
@@ -103,7 +103,7 @@ const getSingleChallenge = async (id: string, userId: string | null) => {
           },
         },
       },
-      // 2. LOGIC: Check if the specific user has voted
+      // check if the specific user has voted
       votes: userId
         ? {
             where: {
@@ -119,7 +119,16 @@ const getSingleChallenge = async (id: string, userId: string | null) => {
     throw new AppError("Challenge not found", status.NOT_FOUND);
   }
 
-  // 2. NECESSARY ADDITION: Count completions for today specifically
+  let myParticipation = null;
+  if (userId) {
+    myParticipation = await prisma.participation.findUnique({
+      where: {
+        userId_challengeId: { userId, challengeId: id },
+      },
+    });
+  }
+
+  // count completions for today specifically
   const completedToday = await prisma.progress.count({
     where: {
       participation: {
@@ -136,6 +145,9 @@ const getSingleChallenge = async (id: string, userId: string | null) => {
 
   return {
     ...challenge,
+    isJoined: myParticipation?.status === "ACTIVE",
+    hasAccess: !!myParticipation, // check participation record
+    participationStatus: myParticipation?.status || null,
     votedByMe: challenge.votes?.length > 0,
     completedToday,
   };

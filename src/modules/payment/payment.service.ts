@@ -23,7 +23,12 @@ const createCheckoutSession = async (userId: string, challengeId: string) => {
     mode: "payment",
     success_url: `${env.FRONTEND_URL}/participations/${challengeId}?success=true`,
     cancel_url: `${env.FRONTEND_URL}/challenges/${challengeId}?canceled=true`,
-    metadata: { userId, challengeId }, // Important for Webhook
+    metadata: { userId, challengeId }, // Used for checkout.session events
+
+    payment_intent_data: {
+      metadata: { userId, challengeId }, // Used for payment_intent events (failures)
+    },
+
     line_items: [
       {
         price_data: {

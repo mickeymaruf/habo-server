@@ -12,9 +12,12 @@ export const auth = betterAuth({
   trustedOrigins: async (request) => {
     const origin = request?.headers.get("origin");
 
-    const allowedOrigins = [env.BETTER_AUTH_URL, env.FRONTEND_URL].filter(
-      Boolean,
-    );
+    const allowedOrigins = [
+      env.BETTER_AUTH_URL,
+      env.FRONTEND_URL,
+      "http://localhost:3000",
+      "http://localhost:5000",
+    ].filter(Boolean);
 
     // Check if origin matches allowed origins or Vercel pattern
     if (
