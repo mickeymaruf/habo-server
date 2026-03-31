@@ -8,6 +8,7 @@ import { CommentRoutes } from "../modules/comment/comment.route";
 import { VoteRoutes } from "../modules/vote/vote.route";
 import { LeaderboardRoutes } from "../modules/leaderboard/leaderboard.route";
 import { AdminRoutes } from "../modules/admin/admin.route";
+import { UserChallengeRoutes } from "../modules/user-challenge/user-challenge.route";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/comments", CommentRoutes);
 router.use("/votes", VoteRoutes);
 router.use("/leaderboard", LeaderboardRoutes);
 router.use("/admin", AdminRoutes);
+router.use("/users", UserChallengeRoutes);
 
 export const IndexRoutes = router;
