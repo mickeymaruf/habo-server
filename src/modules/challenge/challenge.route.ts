@@ -30,11 +30,4 @@ router.delete(
   ChallengeController.deleteChallenge,
 );
 
-// admin approve/reject
-router.patch(
-  "/:id/status",
-  checkAuth(UserRole.ADMIN),
-  ChallengeController.updateChallengeStatus,
-);
-
 export const ChallengeRoutes = router;

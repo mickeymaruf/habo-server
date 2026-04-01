@@ -1,7 +1,6 @@
 import status from "http-status";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/errorHelpers/AppError";
-import { ChallengeStatus } from "../../../generated/prisma/enums";
 import {
   CreateChallengePayload,
   UpdateChallengePayload,
@@ -46,6 +45,7 @@ const getChallenges = async (query: any) => {
       },
       category: category || undefined,
       featured: isFeatured,
+      isBanned: false,
     },
     include: {
       creator: true,
@@ -78,7 +78,7 @@ const getSingleChallenge = async (id: string, userId: string | null) => {
   endOfToday.setHours(23, 59, 59, 999);
 
   const challenge = await prisma.challenge.findUnique({
-    where: { id },
+    where: { id, isBanned: false },
     include: {
       creator: {
         select: { id: true, name: true, image: true, status: true },
@@ -159,7 +159,7 @@ const updateChallenge = async (
   payload: UpdateChallengePayload,
 ) => {
   const challenge = await prisma.challenge.findUnique({
-    where: { id },
+    where: { id, isBanned: false },
   });
 
   if (!challenge) {
@@ -178,7 +178,7 @@ const updateChallenge = async (
 
 const deleteChallenge = async (id: string, user: IRequestUser) => {
   const challenge = await prisma.challenge.findUnique({
-    where: { id },
+    where: { id, isBanned: false },
   });
 
   if (!challenge) {
@@ -189,15 +189,12 @@ const deleteChallenge = async (id: string, user: IRequestUser) => {
     throw new AppError("Unauthorized", status.FORBIDDEN);
   }
 
-  return prisma.challenge.delete({
-    where: { id },
-  });
-};
-
-const updateChallengeStatus = async (id: string, status: ChallengeStatus) => {
   return prisma.challenge.update({
     where: { id },
-    data: { status },
+    data: {
+      isDeleted: true,
+      deletedAt: new Date(),
+    },
   });
 };
 
@@ -207,5 +204,4 @@ export const ChallengeService = {
   getSingleChallenge,
   updateChallenge,
   deleteChallenge,
-  updateChallengeStatus,
 };

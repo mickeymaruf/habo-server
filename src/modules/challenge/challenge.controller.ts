@@ -80,25 +80,10 @@ const deleteChallenge = catchAsync(async (req, res) => {
   });
 });
 
-const updateChallengeStatus = catchAsync(async (req, res) => {
-  const result = await ChallengeService.updateChallengeStatus(
-    req.params.id as string,
-    req.body.status,
-  );
-
-  sendResponse(res, {
-    statusCode: status.OK,
-    success: true,
-    message: "Challenge status updated",
-    data: result,
-  });
-});
-
 export const ChallengeController = {
   createChallenge,
   getChallenges,
   getSingleChallenge,
   updateChallenge,
   deleteChallenge,
-  updateChallengeStatus,
 };
