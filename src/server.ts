@@ -1,23 +1,13 @@
 import app from "./app";
 import { env } from "./config/env";
-import { prisma } from "./lib/prisma";
-import { seedSuperAdmin } from "./utils/seed";
 
-async function main() {
-  try {
-    prisma.$connect();
-    console.log("Connected to the database successfully!");
-
-    await seedSuperAdmin();
-
-    app.listen(env.PORT, () => {
-      console.log(`Server is listening on port ${env.PORT}`);
-    });
-  } catch (error) {
-    console.log("An error occured:", error);
-    prisma.$disconnect();
-    process.exit(1);
-  }
+// Only in development
+// In production, vercel will refer to index.ts which refers to app.ts
+// this is becuase vercel is a serverless platform and does not support listening to a port
+if (process.env.NODE_ENV !== "production") {
+  app.listen(env.PORT || 5000, () => {
+    console.log(
+      `Server is running locally at http://localhost:${env.PORT || 5000}`,
+    );
+  });
 }
-
-main();

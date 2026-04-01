@@ -45,3 +45,5 @@ export const seedSuperAdmin = async () => {
     });
   }
 };
+
+seedSuperAdmin();
