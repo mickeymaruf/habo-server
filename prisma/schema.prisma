@@ -146,6 +146,9 @@ model Challenge {
   comments       Comment[]
   votes          Vote[]
   payments       Payment[]
+
+  @@index([title])   
+  @@index([category])
 }
 
 model Participation {

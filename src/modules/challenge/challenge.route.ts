@@ -17,6 +17,7 @@ router.post(
   ChallengeController.createChallenge,
 );
 router.get("/", ChallengeController.getChallenges);
+router.get("/suggestions", ChallengeController.getSuggestions);
 router.get("/:id", ChallengeController.getSingleChallenge);
 router.patch(
   "/:id",

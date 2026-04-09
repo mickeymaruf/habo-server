@@ -29,6 +29,29 @@ const getChallenges = catchAsync(async (req, res) => {
   });
 });
 
+const getSuggestions = catchAsync(async (req, res) => {
+  const { search } = req.query;
+
+  // If the user hasn't typed anything, don't bother the database
+  if (!search || typeof search !== "string") {
+    return sendResponse(res, {
+      statusCode: status.OK,
+      success: true,
+      message: "Suggestions fetched successfully",
+      data: [],
+    });
+  }
+
+  const result = await ChallengeService.getSuggestions(search);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Suggestions fetched successfully",
+    data: result,
+  });
+});
+
 const getSingleChallenge = catchAsync(async (req, res) => {
   const session = await auth.api.getSession({
     headers: fromNodeHeaders(req.headers),
@@ -83,6 +106,7 @@ const deleteChallenge = catchAsync(async (req, res) => {
 export const ChallengeController = {
   createChallenge,
   getChallenges,
+  getSuggestions,
   getSingleChallenge,
   updateChallenge,
   deleteChallenge,

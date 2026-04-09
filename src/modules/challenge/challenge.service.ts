@@ -70,6 +70,26 @@ const getChallenges = async (query: any) => {
   });
 };
 
+const getSuggestions = async (searchTerm: string, category?: string) => {
+  return await prisma.challenge.findMany({
+    where: {
+      title: {
+        contains: searchTerm,
+        mode: "insensitive",
+      },
+      category: category || undefined,
+      isBanned: false,
+      isDeleted: false,
+    },
+    select: {
+      id: true,
+      title: true,
+      category: true, // Optional: helps user distinguish between similar titles
+    },
+    take: 8, // Keep the list short for the dropdown UI
+  });
+};
+
 const getSingleChallenge = async (id: string, userId: string | null) => {
   // 1. Define the time range for "Today"
   const startOfToday = new Date();
@@ -208,6 +228,7 @@ const deleteChallenge = async (id: string, user: IRequestUser) => {
 export const ChallengeService = {
   createChallenge,
   getChallenges,
+  getSuggestions,
   getSingleChallenge,
   updateChallenge,
   deleteChallenge,
